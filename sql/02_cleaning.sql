@@ -224,9 +224,28 @@ SELECT
   `hmo-provider-fraud-risk.clean.clean_placeholder`(ClmAdmitDiagnosisCode) AS ClaimAdmitDiagnosisCode
 FROM `hmo-provider-fraud-risk.raw.raw_outpatient`;
 
+-- clean_provider_fraud_label.sql
+CREATE OR REPLACE VIEW `hmo-provider-fraud-risk.clean.clean_provider_fraud_label` AS
+SELECT
+  Provider AS provider_id,
+  PotentialFraud AS potential_fraud
+FROM `hmo-provider-fraud-risk.raw.raw_provider_labels`
 
 -- -----------------------------------------------------------------------------
--- 6. Verification: clean view row counts vs. raw source
+-- 6. View: clean_provider_fraud_label
+-- -----------------------------------------------------------------------------
+-- Fixes applied:
+--   - Columns renamed for clarity and consistency with the other clean views
+--     (Provider -> provider_id, PotentialFraud -> potential_fraud)
+
+CREATE OR REPLACE VIEW `hmo-provider-fraud-risk.clean.clean_provider_fraud_label` AS
+SELECT
+  Provider AS provider_id,
+  PotentialFraud AS potential_fraud
+FROM `hmo-provider-fraud-risk.raw.raw_provider_labels`;
+
+-- -----------------------------------------------------------------------------
+-- 7. Verification: clean view row counts vs. raw source
 -- -----------------------------------------------------------------------------
 -- Views reshape data -- they never filter rows, so counts must match the raw
 -- source exactly.
