@@ -73,3 +73,55 @@ The SQL scripts used to clean and prepare the data for this analysis can be foun
 
 ### Provider Drill-Down
 - **Equip investigators with the drill-through view as a first-pass triage tool**, so any provider flagged by the portfolio-level patterns above can be individually verified before an audit is opened — reducing wasted investigation time on false positives.
+
+## Methodology
+
+### Data Structure & Initial Checks
+This dataset originated as three linked raw tables — `Train_Beneficiarydata` (138,556 rows), `Train_Inpatientdata` (40,474 rows), and `Train_Outpatientdata` (517,737 rows) — plus a provider-level fraud label covering 5,410 providers. These were loaded into BigQuery, cleaned into a `clean` layer preserving the exact same row counts (verified zero rows lost across all three tables), then modeled into a star schema consisting of `fact_claims`, `dim_provider`, `dim_beneficiary`, and `dim_diagnosis`, connected via two bridge tables (`bridge_claim_diagnosis`, `bridge_claim_procedure`) to handle the many-to-many relationship between claims and diagnosis/procedure codes.
+
+<insert schema here>
+Prior to modeling, a full data quality audit was conducted — referential integrity, logical date consistency, categorical value validation, range/outlier checks, and target label balance — all run directly against the live BigQuery tables rather than assumed from documentation. The SQL script used to inspect the data can be found <here>
+
+### Assumptions and Caveats
+
+#### Data Cleaning Decisions
+- **Placeholder text masquerading as nulls:** most "missing" data wasn't a true NULL — it was the literal string `"NULL"` (plus `NA`/`N/A`/`NONE`) stored as text across 19 columns each in the inpatient and outpatient tables. Collapsed to real NULL via a reusable `clean_placeholder` function rather than fixed column-by-column.
+- **`DeductibleAmtPaid` type mismatch:** stored as text in the inpatient table but a clean INT64 in outpatient. Cast to INT64 in the clean view to match.
+- **`RenalDiseaseIndicator`** converted to a boolean (`HasRenalDisease`) for consistency with the other 11 `ChronicCond_*` columns.
+- **Fully empty columns dropped:** `ClmProcedureCode_6` (inpatient) and `ClmProcedureCode_5`/`6` (outpatient) — 100% empty across every row, zero information.
+- **27 beneficiaries (~0.02%) with negative annual reimbursement amounts:** investigated by joining against actual claim sums — all 27 have zero real claims on record, so the negative figure can't reflect an actual billing recoupment. Left as-is rather than silently zeroed, clipped, or flipped — the true correct value is unknowable, and fabricating one would violate this project's benchmark-discipline standard.
+- **13 column renames** applied for clarity (e.g. `DOD` → `DateOfDeath`, `IPAnnualReimbursementAmt` → `InpatientAnnualReimbursementAmt`), including one misspelling fix (`ChronicCond_Osteoporasis` → `ChronicCond_Osteoporosis`).
+- **`County`** left as a raw SSA numeric code — no reliable compact county-name lookup table available, and guessing wasn't an option.
+
+#### Modeling Assumptions
+- Single-direction cross-filtering (dimension → fact) for `dim_provider` and `dim_beneficiary` — standard star schema practice, avoids ambiguous filter propagation.
+- `bridge_claim_diagnosis` and `bridge_claim_procedure` use Both cross-filter direction — required for the many-to-many relationship between claims and diagnosis/procedure codes. This doesn't violate the single-direction rule above, since that rule applies specifically to dimension-to-fact relationships.
+- Surrogate keys used throughout, given a join-key naming inconsistency in the source data (`staging_claims.Provider` vs. `clean_provider_fraud_label.provider_id`).
+
+#### Analytical Assumptions
+- No documented fraud-rate target existed going in, so the portfolio's own fraud rate (9.35%) was used as the benchmark for every flagged-vs-non-flagged comparison, rather than an external or arbitrary threshold.
+- Median was checked alongside every mean-based finding before being reported as confirmed — this is how the reimbursement and deductible gaps were validated as real, not outlier-driven.
+- The "claims filed after death" check found 0 cases, but only ~1% of beneficiaries have a real date-of-death value in this dataset. Reported as a finding from a limited, verifiable sample — not as a blanket conclusion that no such fraud pattern exists.
+
+#### Sample Size Caveats
+- **Deceased-at-claim (~1.46x gap):** flagged as a low-confidence signal — death is a rare event within a single-year Medicare sample, making this ratio more volatile than the other findings.
+- **27 beneficiaries with negative annual reimbursement (~0.02% of the beneficiary table):** immaterial to any aggregate figure, but documented rather than silently corrected.
+
+#### Scope Limitations
+- **This dataset is synthetic**, derived from CMS's DE-SynPUF (a statistical model, not real patient records) — findings describe patterns in this synthetic dataset, not a claim about real-world Medicare fraud behavior. This is also the direct explanation for the negative-reimbursement anomaly above.
+- `PotentialFraud` is a dataset label, not a verified legal or investigative outcome — every finding in this report describes an association observed within this dataset, not proof of fraud.
+- Date-of-birth and date-of-death are generalized to the 1st of the month across the entire dataset (a CMS privacy standard for this public data) — any age or time-since-death calculation is accurate only to month/year, not exact day.
+- Geography is analyzed at the State level only; County was excluded as too granular given no reliable lookup table.
+- This is a single snapshot of claims — it shows recorded billing patterns, not how a provider's behavior evolves over time.
+- Procedure code showed no meaningful differentiation *in this dataset* after a data-model correction — reported as a genuine null finding, not a general claim that procedure codes never signal fraud.
+
+#### Tools & Pipeline
+- **Kaggle API (CLI)** — dataset download
+- **BigQuery** — data warehouse, staging, and cleaning (`raw` → `clean` datasets)
+- **Python** — data ingestion into BigQuery, run directly via terminal commands
+- **SQL** — data cleaning and view creation
+- **Power Query** — star schema modeling
+- **Power BI (DAX)** — dashboard and measures, organized in a base → analytical → contextual → advanced hierarchy
+- **GitHub** — version control throughout
+
+Pipeline: Kaggle API (CLI download) → raw CSV → Python ingestion (terminal) → BigQuery `raw` dataset → SQL cleaning (`sql/`) → BigQuery `clean` dataset → Power Query (star schema modeling) → Power BI (dashboard/DAX)
