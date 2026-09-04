@@ -34,6 +34,7 @@ OPTIONS (location = "US");
 --   3. diagnosis_code_count  — count of non-null diagnosis codes (1-10)
 --   4. age_at_claim          — beneficiary age at ClaimStartDt
 --   5. is_deceased_at_claim  — TRUE if beneficiary died on/before ClaimStartDt
+--   6. days_since_provider_last_claim — days since this provider's previous claim (NULL for first claim)
 --
 -- Row count verified: 558,211 (40,474 inpatient + 517,737 outpatient)
 -- ---------------------------------------------------------------------
@@ -96,7 +97,16 @@ SELECT
   CASE
     WHEN b.DateOfDeath IS NOT NULL AND b.DateOfDeath <= c.ClaimStartDt THEN TRUE
     ELSE FALSE
-  END AS is_deceased_at_claim
+  END AS is_deceased_at_claim,
+
+  -- Col 6: days_since_provider_last_claim — days since this provider's
+  -- previous claim (ordered by ClaimStartDt). NULL for each provider's
+  -- first claim, since there is no prior claim to compare against.
+  DATE_DIFF(
+    c.ClaimStartDt,
+    LAG(c.ClaimStartDt) OVER (PARTITION BY c.Provider ORDER BY c.ClaimStartDt),
+    DAY
+  ) AS days_since_provider_last_claim
 
 FROM combined c
 LEFT JOIN `hmo-provider-fraud-risk.clean.clean_beneficiary` b
