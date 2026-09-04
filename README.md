@@ -53,3 +53,23 @@ The SQL scripts used to clean and prepare the data for this analysis can be foun
 
 ### Provider Drill-Down
 - **Individual provider lookup surfaces the same pattern at the case level.** The drill-through table lets an investigator pull up any single provider's claim volume, total reimbursement, and average cost per claim to sanity-check the portfolio-level findings against a specific case.
+
+## Recommendations
+
+### The Scale of the Gap
+- **Prioritize audit resources by exposure, not headcount.** Since 9.35% of providers account for $295.68M in reimbursement, direct SIU review capacity toward the highest-dollar flagged providers first, not an even sweep across the provider base.
+- **Use per-provider median reimbursement and deductible as standing audit triggers.** The ~25x and ~132x gaps are stable at the median, so providers crossing these thresholds are worth flagging for manual review before losses accumulate further.
+
+### Where It Concentrates
+- **Weight inpatient claims more heavily in audit scoring than outpatient.** The gap concentrates there (~24% vs. ~7%), so inpatient-heavy providers deserve closer scrutiny per audit dollar spent.
+- **Monitor physician-level claim concentration, not just provider-level totals.** A provider routing an unusually high volume of claims through a small number of physicians is a pattern worth a standalone alert, independent of total billing size.
+- **Treat California claims with added review weight**, given the confirmed overrepresentation — but pair this with ongoing monitoring rather than a fixed regional bias, since concentration patterns can shift.
+- **Deprioritize procedure code as a standalone fraud indicator.** It didn't hold up as a differentiator here, so audit criteria shouldn't lean on it without other supporting signals.
+
+### Billing Behavior, Not Patient Profile
+- **Add "days between claims" as a monitoring metric.** A provider submitting claims same-day, repeatedly, is a stronger and more actionable early-warning signal than claim duration or diagnosis code count alone.
+- **Treat deceased-at-claim as a secondary corroborating flag, not a primary trigger** — the signal is real but too rare to carry an audit decision on its own.
+- **Remove patient demographics and health status from fraud-risk scoring entirely.** None of them differentiated flagged providers here, so including them would add noise (and potential bias) without predictive value.
+
+### Provider Drill-Down
+- **Equip investigators with the drill-through view as a first-pass triage tool**, so any provider flagged by the portfolio-level patterns above can be individually verified before an audit is opened — reducing wasted investigation time on false positives.
