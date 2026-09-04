@@ -31,4 +31,25 @@ Insights and recommendations are provided on the following key areas:
 
 The SQL scripts used to clean and prepare the data for this analysis can be found [here](sql).
 
-The Power BI dashboard (.pbix) used to explore provider billing patterns can be found [here]().
+## Insights Deep Dive
+
+### The Scale of the Gap
+- **Flagged providers represent a small slice of the provider base but a large share of exposure.** Of 5,410 providers, 506 (9.35%) are flagged as potential fraud, and this group alone accounts for $295.68M in total reimbursement.
+- **Flagged providers show a dramatically higher median reimbursement per provider.** $373.45K vs. $15.06K for non-flagged providers — a ~24.81x gap, holding at the median so it isn't driven by a handful of outliers.
+- **The deductible gap is even more extreme.** $26,359 vs. $200 per provider (~132x), the strongest single signal in this dataset.
+- **Flagged providers also submit far more claims.** ~421 claims per provider vs. ~70 for non-flagged (~6x) — this is a volume pattern, not just a few high-dollar claims.
+
+### Where It Concentrates
+- **The gap is sharper in inpatient care than outpatient.** Inpatient reimbursement shows a ~24% gap vs. ~7% for outpatient, pointing to inpatient billing as the main carrier of the financial signal.
+- **Billing routes through a more concentrated group of physicians.** Across attending, operating, and other physician roles, flagged providers route 2.8x–4.1x more claims through each individual physician than non-flagged providers.
+- **California is overrepresented beyond its population share.** 14.3% of fraud-flagged claims vs. 8.7% of the beneficiary population (~1.64x) — confirmed not a population-size artifact and the highest concentration of any state.
+- **Procedure code alone doesn't differentiate fraud.** After a data-model correction, no single procedure code showed more than an ~11% gap — this is a null finding, not a hidden pattern.
+
+### Billing Behavior, Not Patient Profile
+- **Flagged claims run slightly longer and list more diagnosis codes.** ~18% longer duration and ~11% more diagnosis codes than non-flagged claims — real but modest signals on their own.
+- **Flagged providers submit claims in far tighter succession.** A median of 0 days between a provider's consecutive claims vs. 1 day for non-flagged, confirmed under both median and mean (0.86 vs. 4.33 days) — not outlier-driven.
+- **Deceased-at-claim is a weak, low-confidence signal.** ~1.46x more likely in fraud-flagged claims, but the event is rare enough that it shouldn't be read as reliable on its own.
+- **Patient identity does not predict fraud.** Age, gender, race, chronic conditions, diagnosis mix, Medicare coverage duration, and length of stay all showed no meaningful difference — fraud in this dataset tracks billing behavior, not who the patient is.
+
+### Provider Drill-Down
+- **Individual provider lookup surfaces the same pattern at the case level.** The drill-through table lets an investigator pull up any single provider's claim volume, total reimbursement, and average cost per claim to sanity-check the portfolio-level findings against a specific case.
