@@ -204,7 +204,7 @@ Prior to modeling, a full data quality audit was conducted — referential integ
 - **Python** — data ingestion into BigQuery, run directly via terminal commands
 - **SQL** — data cleaning and view creation
 - **Power Query** — star schema modeling
-- **Power BI (DAX)** — dashboard and measures, organized in a base → analytical → contextual → advanced hierarchy
+- **Power BI (DAX)** — dashboard and measures, organized in a base → analytical → contextual
 - **GitHub** — version control throughout
 
 Pipeline: Kaggle API (CLI download) → raw CSV → Python ingestion (terminal) → BigQuery `raw` dataset → SQL cleaning (`sql/`) → BigQuery `clean` dataset → Power Query (star schema modeling) → Power BI (dashboard/DAX)
