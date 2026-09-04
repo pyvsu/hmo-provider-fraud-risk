@@ -79,6 +79,90 @@ The SQL scripts used to clean and prepare the data for this analysis can be foun
 ### Data Structure & Initial Checks
 This dataset originated as three linked raw tables — `Train_Beneficiarydata` (138,556 rows), `Train_Inpatientdata` (40,474 rows), and `Train_Outpatientdata` (517,737 rows) — plus a provider-level fraud label covering 5,410 providers. These were loaded into BigQuery, cleaned into a `clean` layer preserving the exact same row counts (verified zero rows lost across all three tables), then modeled into a star schema consisting of `fact_claims`, `dim_provider`, `dim_beneficiary`, and `dim_diagnosis`, connected via two bridge tables (`bridge_claim_diagnosis`, `bridge_claim_procedure`) to handle the many-to-many relationship between claims and diagnosis/procedure codes.
 
+```mermaid
+erDiagram
+    dim_provider ||--o{ fact_claims : ""
+    dim_beneficiary ||--o{ fact_claims : ""
+    fact_claims ||--o{ bridge_claim_diagnosis : ""
+    dim_diagnosis ||--o{ bridge_claim_diagnosis : ""
+    fact_claims ||--o{ bridge_claim_procedure : ""
+    dim_procedure ||--o{ bridge_claim_procedure : ""
+
+    dim_provider {
+        string provider_id PK
+        boolean potential_fraud
+    }
+    dim_beneficiary {
+        string beneficiary_key PK
+        string BeneID
+        int County
+        date DateOfBirth
+        date DateOfDeath
+        string Gender
+        boolean HasAlzheimer
+        boolean HasCancer
+        boolean HasDepression
+        boolean HasDiabetes
+        boolean HasHeartFailure
+        boolean HasIschemicHeart
+        boolean HasKidneyDisease
+        boolean HasObstrPulmonary
+        boolean HasOsteoporosis
+        boolean HasRenalDisease
+        boolean HasRheumatoidArthritis
+        boolean HasStroke
+        int InpatientAnnualDeductibleAmt
+        int InpatientAnnualReimbursementAmt
+        int MonthsCovered_MedicarePartA
+        int MonthsCovered_MedicarePartB
+        int OutpatientAnnualDeductibleAmt
+        int OutpatientAnnualReimbursementAmt
+        string Race
+        string State
+    }
+    fact_claims {
+        string ClaimID PK
+        string beneficiary_key FK
+        string provider_id FK
+        date AdmissionDt
+        int age_at_claim
+        string AttendingPhysician
+        int claim_duration_days
+        string ClaimAdmitDiagnosisCode
+        string claim_type
+        date ClaimEndDt
+        date ClaimStartDt
+        int days_since_provider_last_claim
+        int DeductibleAmtPaid
+        string DiagnosisGroupCode
+        int diagnosis_code_count
+        date DischargeDt
+        int InscClaimAmtReimbursed
+        boolean is_deceased_at_claim
+        int length_of_stay_days
+        string OperatingPhysician
+        string OtherPhysician
+    }
+    bridge_claim_diagnosis {
+        string ClaimID FK
+        string diagnosis_key FK
+        string diagnosis_code
+    }
+    dim_diagnosis {
+        string diagnosis_key PK
+        string diagnosis_code
+    }
+    bridge_claim_procedure {
+        string ClaimID FK
+        string procedure_key FK
+        string procedure_code
+    }
+    dim_procedure {
+        string procedure_key PK
+        string procedure_code
+    }
+```
+
 Prior to modeling, a full data quality audit was conducted — referential integrity, logical date consistency, categorical value validation, range/outlier checks, and target label balance — all run directly against the live BigQuery tables rather than assumed from documentation. The SQL script used to inspect the data can be found [here](sql/01_inspection.sql)
 
 ### Assumptions and Caveats
