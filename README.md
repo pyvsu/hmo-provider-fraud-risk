@@ -79,7 +79,6 @@ The SQL scripts used to clean and prepare the data for this analysis can be foun
 ### Data Structure & Initial Checks
 This dataset originated as three linked raw tables — `Train_Beneficiarydata` (138,556 rows), `Train_Inpatientdata` (40,474 rows), and `Train_Outpatientdata` (517,737 rows) — plus a provider-level fraud label covering 5,410 providers. These were loaded into BigQuery, cleaned into a `clean` layer preserving the exact same row counts (verified zero rows lost across all three tables), then modeled into a star schema consisting of `fact_claims`, `dim_provider`, `dim_beneficiary`, and `dim_diagnosis`, connected via two bridge tables (`bridge_claim_diagnosis`, `bridge_claim_procedure`) to handle the many-to-many relationship between claims and diagnosis/procedure codes.
 
-<insert schema here>
 Prior to modeling, a full data quality audit was conducted — referential integrity, logical date consistency, categorical value validation, range/outlier checks, and target label balance — all run directly against the live BigQuery tables rather than assumed from documentation. The SQL script used to inspect the data can be found [here](sql/01_inspection.sql)
 
 ### Assumptions and Caveats
