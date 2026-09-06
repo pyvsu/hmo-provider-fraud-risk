@@ -121,11 +121,11 @@ LEFT JOIN `hmo-provider-fraud-risk.clean.clean_beneficiary` b
 -- a many-to-many relationship that a direct fact-to-dimension link
 -- cannot represent. NULL codes are dropped (empty diagnosis slots).
 --
--- Row count verified: 1,680,716
+-- Row count verified: 1,679,312
 -- ---------------------------------------------------------------------
 CREATE OR REPLACE VIEW `hmo-provider-fraud-risk.staging.staging_claim_diagnosis` AS
 
-SELECT ClaimID, diagnosis_code
+SELECT DISTINCT ClaimID, diagnosis_code
 FROM `hmo-provider-fraud-risk.staging.staging_claims`,
 UNNEST([
   ClmDiagnosisCode_1, ClmDiagnosisCode_2, ClmDiagnosisCode_3, ClmDiagnosisCode_4, ClmDiagnosisCode_5,
